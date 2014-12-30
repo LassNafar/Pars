@@ -22,4 +22,10 @@ class ParsingTest extends PHPUnit_Framework_TestCase
         $this->start = new Parsing;
         $this->assertInternalType('array', $this->start->analyzeName());
     }
+    
+    public function testCompareName()
+    {
+        $this->start = new Parsing;
+        $this->assertInternalType('array', $this->start->compareName(array("1" => "111", "2" => "111")));
+    }
 }
