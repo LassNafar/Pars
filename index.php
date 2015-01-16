@@ -3,7 +3,7 @@
     require_once "AutoLoad.php";
     
     $r= new ReadPosts;
-    $r->readAllPosts();
+    $r->test();
 //    $r = new DbWord;
 //    $r->post();
     

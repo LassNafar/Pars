@@ -32,8 +32,12 @@ class ReadPosts
     
     public function test()
     {
-        self::$post = $this->db->queryContent(201827);
-        $this->db->insertName($this->Analyze());
+            self::$post = $this->db->queryContent(36748);
+            echo self::$post;
+            $analyze = $this->Analyze();
+            if ($analyze != false) {
+                $this->db->insertName($analyze);
+            }
     }
     
     public function Analyze()

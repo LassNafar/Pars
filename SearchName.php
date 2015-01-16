@@ -28,7 +28,9 @@ class SearchName
         }
         elseif (count($this->arrName) == 1) {
             foreach ($this->arrName as $val) {
-                $result[$val] = 1;
+                if (substr_count($val, " ")!=0) {
+                    $result[$val] = 1;
+                }
             }
             return $result;
         }
@@ -89,7 +91,17 @@ class SearchName
                                 unset($arrName[$j]);
                             }
                             else {
-                                
+                                $word = explode(" ", $arrName[$j]);
+                                $s = 0;
+                                foreach ($word as $val) {
+                                    if (substr_count($arrName[$i],substr($val, 0, -2))!=0) {
+                                        $s++;
+                                    }
+                                }
+                                if ($s==$jw+1) {
+                                    $sum++;
+                                    unset($arrName[$j]);
+                                }
                             }
                         }
                     }
