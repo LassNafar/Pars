@@ -9,6 +9,8 @@ class SearchName
     {
         $this->db = Db::getInstance();
         ReadPosts::$post = preg_replace("/(«(.*)»)/U", "", html_entity_decode(ReadPosts::$post));
+        $this->db->deleteAnother();
+        ReadPosts::$post = preg_replace("/\s/u", " ", ReadPosts::$post);
         ReadPosts::$post = preg_replace("/[^А-Яа-я\s]+/u", "#", ReadPosts::$post);
         ReadPosts::$post = preg_replace("/\b[а-я]+\b/u", "#", ReadPosts::$post);
         ReadPosts::$post = preg_replace("/\b[А-Я]{2,}\b/u", "#", ReadPosts::$post);
@@ -30,9 +32,10 @@ class SearchName
             foreach ($this->arrName as $val) {
                 if (substr_count($val, " ")!=0) {
                     $result[$val] = 1;
+                    return $result;
                 }
             }
-            return $result;
+            return false;
         }
         else {
             return false;
@@ -63,53 +66,127 @@ class SearchName
         foreach ($arr as $val) {
             $arrName[] = trim($val);
         }
-        
-        $arrCompareName = $this->deleteSmallName($this->deleteSmallName($arrName));
-        var_dump($arrCompareName);
-        foreach ($arrCompareName as $key => $val) {
-            if (substr_count($key, " ") == 0) {
-                unset($arrName[$arrCompareName[$key]]);
-            }
+        $arrCompareName = $this->deleteSmallName($arrName);
+        if ($arrCompareName!=false) {
+            return $arrCompareName;
         }
-        return $arrCompareName;
+        else {
+            return false;
+        }
     }
     
     public function deleteSmallName($arrName)
     {
-        $arrCompareName = array();
-        $l = count($arrName);
-        for ($i=0;$i<$l;$i++) {
-            if (array_key_exists($i, $arrName)) {
-                $sum = 1;
-                for ($j=0;$j<$l;$j++) {
-                    if (array_key_exists($j, $arrName)&&$i!=$j) {
-                        $iw = substr_count($arrName[$i], " ");
-                        $jw = substr_count($arrName[$j], " "); 
-                        if ($iw>=$jw){
-                            if ($jw=0&&substr_count($arrName[$i],substr($arrName[$j], 0, -2))!=0) {
-                                $sum++;
-                                unset($arrName[$j]);
-                            }
-                            else {
-                                $word = explode(" ", $arrName[$j]);
-                                $s = 0;
-                                foreach ($word as $val) {
-                                    if (substr_count($arrName[$i],substr($val, 0, -2))!=0) {
-                                        $s++;
-                                    }
-                                }
-                                if ($s==$jw+1) {
-                                    $sum++;
-                                    unset($arrName[$j]);
-                                }
-                            }
+        foreach ($arrName as $key => $val) {
+            $arrl = substr_count($val, " ");
+            if ($arrl==0) {
+                $arr0[$val] = 1;
+            }
+            if ($arrl==1) {
+                $arr1[$val] = 1;
+            }
+            if ($arrl==2) {
+                $arr2[$val] = 1;
+            }
+        }
+        
+        if (isset($arr0)&&count($arr0)!=0) {
+            $this->likeNameOne($arr0);
+        }
+        if (isset($arr1)&&count($arr1)!=0) {
+            $this->likeNameOne($arr1);
+        }
+        if (isset($arr2)&&count($arr2)!=0) {
+            $this->likeNameOne($arr2);
+        }
+        if (isset($arr1)&&isset($arr0)&&count($arr1)!=0&&count($arr0)!=0) {
+            $this->likeNameRang($arr1, $arr0);
+        }
+        if (isset($arr2)&&isset($arr1)&&count($arr2)!=0&&count($arr1)!=0) {
+            $this->likeNameRang($arr2, $arr1);
+        }
+        
+        $arr = array();
+        if (isset($arr2)){
+            $arr += $arr2;
+        }
+        if (isset($arr1)){
+            $arr += $arr1;
+        }
+        if (isset($arr0)){
+            $arr += $arr0;
+        }
+        if (count($arr)>0) {
+            return $arr;
+        }
+        else {
+            return false;
+        }
+    }
+    
+    public function likeNameRang(&$arr1, &$arr0) 
+    {
+        foreach ($arr1 as $key1 => $val1) {
+            foreach ($arr0 as $key0 => $val0) {
+                if ($val0!=0&&array_key_exists($key1, $arr1)&&array_key_exists($key0, $arr0)) {
+                    $jw = substr_count($key0, " ");
+                    $word = explode(" ", $key0);
+                    $s = 0;
+                    foreach ($word as $val) {
+                        if (strlen($val)<=6||substr_count($key1,substr($val, 0, -2))!=0) {
+                            $s++;
+                        }
+                    }
+                    if ($s==$jw+1) {
+                        $arr1[$key1] += $val0;
+                        $arr0[$key0] = 0;
+                    }
+                }
+            }
+        }
+        $this->clearArr($arr1);
+        $this->clearArr($arr0);
+    }
+    
+    public function likeNameOne(&$arr0) 
+    {
+        $k1 = 0; 
+        foreach ($arr0 as $key1 => $val1) {
+            $k0 = 0;
+            foreach ($arr0 as $key0 => $val0) {
+                if ($val1!=0&&$val0!=0&&$k0!=$k1&&array_key_exists($key1, $arr0)&&array_key_exists($key0, $arr0)) {
+                    $jw = substr_count($key0, " ");
+                    $word = explode(" ", $key0);
+                    $s = 0;
+                    foreach ($word as $val) {
+                        if (strlen($val)<=6||substr_count($key1,substr($val, 0, -2))!=0) {
+                            $s++;
+                        }
+                    }
+                    if ($s==$jw+1) {
+                        if (strlen($arr0[$key1])<=strlen($arr0[$key0])){
+                            $arr0[$key1] += $val0;
+                            $arr0[$key0] = 0;
+                        }
+                        else {
+                            $arr0[$key0] += $val1;
+                            $arr0[$key1] = 0;
                         }
                     }
                 }
-                $arrCompareName[$arrName[$i]] = $sum;
-                unset($arrName[$i]);
+                $k0++;
+            }
+            $k1++;
+        }
+        $this->clearArr($arr0);
+    }
+    
+    public function clearArr(&$arr) 
+    {
+        foreach ($arr as $key => $val) {
+            if ($val == 0) {
+                unset($arr[$key]);
             }
         }
-        return $arrCompareName;
     }
 }

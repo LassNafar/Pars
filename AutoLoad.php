@@ -7,7 +7,6 @@
         static public function load ($className){
             self::$path = "/www/Parsing/".str_replace("\\", "/", $className) . ".php";
             if(file_exists(self::$path) == true){
-                //echo self::$path;
                 require_once self::$path;
             }
         }
